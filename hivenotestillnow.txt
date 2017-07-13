@@ -1,0 +1,420 @@
+
+ HIVE
+ ====
+
+HIVE ARCHITECTURE
+DATA TYPES
+HIVE OPERATORS
+HIVE FUNCTIONS
+HIVE CAPABILITIES
+SECURITY AND ADMIN TASK
+HIVE CLI(command line interface)
+CONCEPT OF PARTITIONING AND BUCKETING
+
+- if not comfortable in writing programs
+- it is written in SQL 
+- is it possible to write structure query on unstructured data in hive
+-default database -DERBY
+-By default the hive warehouse directory is located at  the hdfs location /user/hive/warehouse
+-If you want to change this location, you can add the following property to hive-site.xml.
+Everyone using hive should have appropriate read/write permissions to this warehouse directory.
+<property>
+   <name>hive.metastore.warehouse.dir</name>
+   <value>/user/hivestore/warehouse </value>
+   <description>location of the warehouse directory</description>
+ </property>
+-Internally the hive queries are converted into MapReduce jobs,so no need to write java programs
+-the schema and the structures of databases and tables are stored in metastore.db
+-datatypes of hive
+
+simple datatypes
+1)string 
+2)float
+3)numerics
+--->INT
+---->BIGINT
+--->SMALLINT
+--->TINYINT
+
+4)double
+5)TIMESTAMP
+6)Date
+
+complex datatypes
+1)Arrays
+2)maps
+3)structs
+Even though it provides SQL styled querying capability, the primary intention of hive is to
+append data ware housing capabilities on Hadoop clusters.
+ Hive= Hadoop + SQL
+- 1.2.1 version
+- whenever we create databases niit; so new folder is created in hdfs  /user/hive/warehouse---- niit.db
+
+- first creates blank table structure
+- this table structure gets map to that niit.db folder
+- so it will read the data from that folder
+INSERT OVERWRITE will overwrite any existing data in the table or partition
+and INSERT INTO will append to the table or partition keeping the existing
+data.
+
+hive
+---------------------------------
+hive is a open source data warehouse software for faciliting queries and managing large data sets  residing in HDFS .
+it provides HiveQL to solve queries similiar to SQL
+in hive,only structured data can be handled
+Data is stored as files..........
+there are 3 file formats than hive can handle:
+
+1)Text file
+2)Sequence file
+3)Avro file
+
+what is file format?
+
+file format is basically a format in which a file is stored and encoded in a computer file.In hive,it means how records in a file is stored.
+How records are encoded in a file define file format
+
+
+By default, if we use TEXTFILE format then each line is considered as a record. 
+We can create a TEXTFILE format in Hive as follows:
+create table olympic(athelete STRING,age INT,country STRING,year STRING,closing STRING,sport STRING,gold INT,silver INT,bronze INT,total INT) row format delimited fields terminated by '\t' stored as textfile
+
+loading in a textfile
+
+load data local inpath ‘path of your file’ into table olympic;
+
+1
+create table table_name (schema of the table) row format delimited fields terminated by ',' | stored as TEXTFILE.
+At the end, we need to specify the type of file format. If we do not specify anything it will consider the file format as TEXTFILE format.
+
+Sequence file
+----------------------------------------
+sequence file is a flat file consists of binary keys/values.in hive queries are converted in mapreduce jobs,it decides on appropriate keys and values 
+
+for each record.
+hive has sequence reader and sequence writer for reading and writing through sequence file
+
+
+creating table
+-----------------------------------------
+create table olympic_sequencefile(athelete STRING,age INT,country STRING,year STRING,closing STRING,sport STRING,gold INT,silver INT,bronze INT,total INT) row format delimited fields terminated by '\t' stored as sequencefile
+
+
+
+loading data into sequence 
+--------------------------------------------
+Now to load data into this table is somewhat different from loading into the table created using TEXTFILE format.
+ You need to insert the data from another table because this SEQUENCEFILE format is binary format. It compresses the data and then stores it into the table.
+ If you want to load directly as in TEXTFILE format that is not possible because we cannot insert the compressed files into tables.
+So to load the data into SEQUENCEFILE we need to use the following approach:
+
+INSERT OVERWRITE TABLE olympic_sequencefile
+SELECT * FROM olympic;
+----------------------------------------------
+DATA
+-------------------------------
+patient
+
+patient,profession,claims
+patient1,doctor,8000      
+patient2,army,7500
+patient3,hr,9000 1
+patient4,finance,4750 2
+patient5,admin,3500
+patient6,TS,2750
+
+
+medical
+name,desig,claims
+amy,hr,8000
+jack,hr,7500
+joe,finance,9000
+daniel,admin,4750
+tim,TS,4750
+tim,TS,3500
+tim,TS,2750
+queries
+--------------------------------------------
+1)join the two table (claims)
+select p.patient,p.profession,m.claims from medi5 m,patient1 p where p.claims=m.claims;
+2)extract all patient name whose desig is same as their medical doctor
+--------------------------------------------------------------------------------------
+3)select p.patient,p.profession,p.claims from medi5 m,patient1 p where m.desif=p.profession and p.claims!=m.claims;
+
+patient3,hr,9000 
+patient4,finance,4750 
+patient4,finance,4750
+
+patient6,TS,2750
+
+4)to view detailed schema of a table
+describe extended medi5;
+OK
+name                	string              	                    
+desif               	string              	                    
+claims              	int                 	                    
+	 	 
+Detailed Table Information	Table(tableName:medi5, dbName:niit, owner:hduser, createTime:1497808599, lastAccessTime:0, retention:0,
+ sd:StorageDescriptor(cols:[FieldSchema(name:name, type:string, comment:null), FieldSchema(name:desif, type:string, comment:null),
+ FieldSchema(name:claims, type:int, comment:null)], location:hdfs://localhost:54310/user/hive/warehouse/niit.db/medi5, 
+inputFormat:org.apache.hadoop.mapred.TextInputFormat, outputFormat:org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat, 
+compressed:false, numBuckets:-1, serdeInfo:SerDeInfo(name:null, serializationLib:org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe,
+ parameters:{serialization.format=,, field.delim=,}), bucketCols:[], sortCols:[], parameters:{}, skewedInfo:SkewedInfo(skewedColNames:[], 
+skewedColValues:[], skewedColValueLocationMaps:{}), storedAsSubDirectories:false), partitionKeys:[], parameters:{numFiles=1, COLUMN_STATS_ACCURATE=true,
+ transient_lastDdlTime=1497808673, numRows=0, totalSize=96, rawDataSize=0}, viewOriginalText:null, viewExpandedText:null, tableType:MANAGED_TABLE)	
+Time taken: 3.503 seconds, Fetched: 5 row(s)
+5) to view  schema of a table
+hive (niit)> describe medi5
+           > ;
+OK
+name                	string              	                    
+desif               	string              	                    
+claims              	int  
+
+EXAMPLE
+----------------------------------------------------------------------------
+create table cust(id int,name string,comm string,age int,profession string)
+           > row format delimited fields terminated by','
+           > stored as textfile;
+OK
+Time taken: 1.538 seconds
+hive (niit)>insert overwrite local directory '/home/hduser/countbyprofession' row format delimited fields terminated by ',' select profession,count(profession) as countbyprofession from cust group by profession ;
+
+
+
+
+
+word count
+----------------------------------------------
+create table input(lines string);
+
+load data local inpath 'home/hduser/file.txt' overwrite into table input
+select split(lines,'') as word from input;
+select explode(split(lines,'')) as word from input;
+select word,count(*) as count from (select explode(split(lines,'') )as word from input) a  group by word ;
+
+
+
+partitioning
+----------------------------------------
+a simple query if you run then hive reads the entire data inspite of where clause,
+suppose 1PB we have loaded ,1PB/128MB=82000 blocks; so hive will read from entire 82000blocks
+but then mappers will be distribute to each block,
+we have overcome this problem by implemention of partitioning in hive
+in hive,with implemention of partitioning the data will be split into mutiple partioners where each partioner 
+will contain the data pertaining to the partition coloumns and is stored as subdirectory within the partioned table in /user/hive/warehouse hdfs
+so when we run queries,where applicable,only the required blocks will be read ,not the entire data,thus reducing the mappers
+Its helps to organize the data in logical fashion and when we query the partitioned table using partition column, it allows hive to skip all but
+ relevant sub-directories and files. This can lead to tremendous reduction in data required to read and filter in the initial map stage. This reduces the number of mapper, I/O operation and response time for the query.
+
+Stage-1: number of mappers: 1; number of reducers: 0
+create table txnrecordsByCat(txno int,txndate string ,custno int,
+           > amount double,product string,city string,state string,spendy string)
+           > partitioned by(category string)
+           > row format delimited fields
+           > terminated by ','
+           > stored as textfile;
+OK
+Time taken: 0.348 seconds
+hive (niit)> SET hive.exec.dynamic.partition = true;
+hive (niit)> SET hive.exec.dynamic.partition.mode = nonstrict;
+hive (niit)> INSERT OVERWRITE TABLE txnrecordsByCat PARTITION(category)select txno,txndate,custno,amount,product,city,state,spendby,category from txn;
+
+
+in case of buckting
+-----------------------------------------------------------------------------------------------
+Stage-1: number of mappers: 1; number of reducers: 10=no of buckets
+create table txnrecordsByCat2(txno int,txndate string,custno int,
+           > amount double,product string,city string,state string,spendyby
+           > string)
+           > partitioned by(category string)
+           > clustered by(state) into 10 buckets
+           > row format delimited fields 
+           > terminated by ','
+           > stored as textfile;
+OK
+Time taken: 0.315 seconds
+hive (niit)> SET hive.enforce.bucketing=true;
+hive (niit)> INSERT OVERWRITE TABLE txnrecordsByCat2 PARTITION(category)select txno,txndate,custno,amount,product,city,state,spendby,category from txn;
+ load data local inpath '/home/hduser/custs.txt' overwrite into table cust;
+K 2. Inserting output in hdfs file system
+-------------------------------------------
+INSERT OVERWRITE DIRECTORY '/niit/custcount' row format delimited fields terminated by ',' select profession, count(*) as headcount from customer group by profession order by headcount desc limit 10;
+K 1. Inserting output in local file
+------------------------------
+INSERT OVERWRITE LOCAL DIRECTORY '/home/hduser/mindtree/custcount' row format delimited fields terminated by ',' 
+select profession, count(*) as headcount from customer group by profession order by headcount desc limit 10;
+
+
+
+L. to execute script from command prompt
+--------------------------------------
+$ hive -f filename.sql
+$ hive -f professioncount.sql
+
+M. to execute command from command prompt
+--------------------------------------
+$ hive -e "select * from retail.customer"
+
+Q. inserting output into another table ( make sure results table is created beforehand)
+---------------------------------------------------------------------------------------
+create table Airsports(txnno INT, txndate STRING, custno INT, amount DOUBLE, 
+category STRING, product STRING, city STRING, state STRING, spendby STRING)
+row format delimited
+fields terminated by ','
+stored as textfile;
+
+insert overwrite table Airsports select * from txnrecords where category = 'Air Sports';
+T. Joins in hive
+----------------
+****emp.txt
+****swetha,250000,Chennai
+****anamika,200000,Kanyakumari
+****tarun,300000,Pondi
+****anita,250000,Selam
+
+
+****email.txt
+****swetha,swetha@gmail.com
+****tarun,tarun@edureka.in
+****nagesh,nagesh@yahoo.com
+****venkatesh,venki@gmail.com
+
+
+create table employee(name string, salary float,city string)
+row format delimited
+fields terminated by ',';
+
+load data local inpath '/home/hduser/emp.txt' into table employee;
+
+select * from employee;
+
+create table mailid (name string, email string)
+row format delimited
+fields terminated by ',';
+
+
+load data local inpath '/home/hduser/email.txt' into table mailid;
+
+select * from mailid;
+
+inner join
+----------
+select a.name,a.city,a.salary,b.email from 
+employee a join mailid b on a.name = b.name;
+
+outer joins
+-----------
+select a.name,a.city,a.salary,b.email from 
+employee a left outer join mailid b on a.name = b.name;
+
+
+select b.name,a.city,a.salary,b.email from 
+employee a right outer join mailid b on a.name = b.name;
+
+select a.name,a.city,a.salary,b.email from 
+employee a full outer join mailid b on a.name = b.name;
+
+
+. Loading Avro type-data (flume) in Hive table
+--------------------------------------------
+CREATE TABLE tweets
+  ROW FORMAT SERDE
+     'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+  STORED AS INPUTFORMAT
+     'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+  OUTPUTFORMAT
+     'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+  TBLPROPERTIES ('avro.schema.url'='file:/home/hduser/Twitter.avsc') ;
+
+LOAD DATA Local INPATH '/home/hduser/FlumeData.148*' OVERWRITE INTO TABLE tweets;
+
+
+
+CREATE TABLE tweets_csv (
+id string, 
+user_friends_count int, 
+user_location string,
+user_description string,
+user_statuses_count int,
+user_followers_count int,
+user_name string,
+user_screen_name string,
+created_at string,
+text string,
+retweet_count bigint,
+retweeted boolean,
+in_reply_to_user_id bigint,
+source string,
+in_reply_to_status_id bigint,
+media_url_https string,
+expanded_url string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE;
+
+INSERT OVERWRITE TABLE tweets_csv SELECT * FROM tweets;
+
+
+X. Convert Text file to Avro Format
+-----------------------------------
+create database college;
+use college;
+
+student.csv
+-----------
+Amit,Maths,91
+Amit,Physics,48
+Amit,Chemistry,66
+Sanjay,Maths,96
+Sanjay,Physics,64
+Sanjay,Chemistry,73
+
+Create a Hive table stored as textfile
+
+CREATE TABLE csv_table (
+student_name string,
+subject string,
+marks INT)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+STORED AS TEXTFILE;
+
+--2. Load csv_table with student.csv data
+LOAD DATA LOCAL INPATH "/home/hduser/students.csv" OVERWRITE INTO TABLE csv_table;
+
+--3. Create another Hive table using AvroSerDe
+CREATE TABLE avro_table
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+TBLPROPERTIES (
+    'avro.schema.literal'='{
+      "namespace": "abc",
+      "name": "student_marks",
+      "type": "record",
+      "fields": [ { "name":"student_name","type":"string"}, { "name":"subject","type":"string"}, { "name":"marks","type":"int"}]
+    }');
+
+--4. Load avro_table with data from csv_tabl
+ INSERT OVERWRITE TABLE avro_table SELECT student_name, subject, marks FROM csv_table;
+
+--Now you can get data in Avro format from Hive warehouse folder. To dump this file to local file system use below command:
+
+ hadoop fs -cat /user/hive/warehouse/college.db/avro_table/* > student.avro
+
+---5 Create and Load data in ORC format
+
+CREATE TABLE orc_table (
+student_name string,
+subject string,
+marks INT)
+STORED AS ORC;
+
+INSERT OVERWRITE TABLE orc_table SELECT student_name, subject, marks FROM csv_table;
+
+
+
+
+
+
+
+
